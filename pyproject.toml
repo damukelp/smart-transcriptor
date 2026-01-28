@@ -1,0 +1,9 @@
+[project]
+name = "smart-transcriptor"
+version = "0.1.0"
+description = "Real-time streaming transcription with diarization and SLM analysis"
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"

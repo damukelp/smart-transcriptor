@@ -1,0 +1,41 @@
+services:
+  gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile.gateway
+    ports:
+      - "8000:8000"
+    environment:
+      GATEWAY_ASR_WS_URL: "ws://asr:8001/stream"
+      GATEWAY_MAX_SESSIONS: "10"
+    depends_on:
+      - asr
+
+  asr:
+    build:
+      context: .
+      dockerfile: Dockerfile.asr
+    ports:
+      - "8001:8001"
+    environment:
+      ASR_MODEL_SIZE: "base"
+      ASR_DEVICE: "auto"
+      ASR_COMPUTE_TYPE: "auto"
+      ASR_HF_TOKEN: "${HF_TOKEN:-}"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  slm:
+    build:
+      context: .
+      dockerfile: Dockerfile.slm
+    ports:
+      - "8002:8002"
+    environment:
+      SLM_OLLAMA_URL: "${OLLAMA_URL:-http://host.docker.internal:11434}"
+      SLM_MODEL_NAME: "${SLM_MODEL:-phi3}"
