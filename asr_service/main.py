@@ -64,11 +64,14 @@ async def stream_endpoint(ws: WebSocket):
 
             if "bytes" in message:
                 session.add_audio(message["bytes"])
+                logger.info("Audio received: buffer=%d samples", len(session._audio_buffer))
 
                 # Process complete chunks (transcription only, diarization at end)
                 while session.has_chunk():
                     chunk, offset = session.pop_chunk()
+                    logger.info("Transcribing chunk at offset=%.1fs", offset)
                     segments = transcribe_chunk(chunk, offset, session.language)
+                    logger.info("Transcribed %d segments", len(segments))
 
                     for seg in segments:
                         ts = TranscriptSegment(
@@ -137,8 +140,8 @@ async def stream_endpoint(ws: WebSocket):
 
     except WebSocketDisconnect:
         logger.info("ASR client disconnected: %s", session.stream_id if session else "unknown")
-    except Exception:
-        logger.exception("ASR stream error")
+    except Exception as exc:
+        logger.exception("ASR stream error: %s", exc)
         try:
             if session:
                 await ws.send_text(
