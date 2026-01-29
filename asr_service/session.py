@@ -27,6 +27,7 @@ class StreamSession:
         )
 
         self.final_segments: list[dict] = []
+        self.all_partial_segments: list = []
 
     def add_audio(self, pcm_bytes: bytes) -> None:
         """Append raw 16-bit PCM audio to the buffer."""

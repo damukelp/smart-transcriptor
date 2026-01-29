@@ -65,25 +65,22 @@ async def stream_endpoint(ws: WebSocket):
             if "bytes" in message:
                 session.add_audio(message["bytes"])
 
-                # Process complete chunks
+                # Process complete chunks (transcription only, diarization at end)
                 while session.has_chunk():
                     chunk, offset = session.pop_chunk()
                     segments = transcribe_chunk(chunk, offset, session.language)
-                    diarization = session.diarizer.diarize()
 
                     for seg in segments:
-                        speaker = session.diarizer.assign_speaker(
-                            seg.start_time, seg.end_time, diarization
-                        )
                         ts = TranscriptSegment(
                             status=SegmentStatus.partial,
                             segment_id=session.next_segment_id(),
                             start_time=seg.start_time,
                             end_time=seg.end_time,
                             text=seg.text,
-                            speaker=speaker,
+                            speaker=None,
                             confidence=seg.confidence,
                         )
+                        session.all_partial_segments.append(ts)
                         await ws.send_text(
                             SegmentMessage(stream_id=start.stream_id, segment=ts).model_dump_json()
                         )
@@ -93,30 +90,45 @@ async def stream_endpoint(ws: WebSocket):
                 if data.get("type") == ClientMessageType.end:
                     break
 
-        # Flush remaining audio
+        # Flush remaining audio and run diarization once on full buffer
         if session:
             remainder = session.flush()
             if remainder:
                 chunk, offset = remainder
                 segments = transcribe_chunk(chunk, offset, session.language)
-                diarization = session.diarizer.diarize()
                 for seg in segments:
-                    speaker = session.diarizer.assign_speaker(
-                        seg.start_time, seg.end_time, diarization
-                    )
                     ts = TranscriptSegment(
                         status=SegmentStatus.final,
                         segment_id=session.next_segment_id(),
                         start_time=seg.start_time,
                         end_time=seg.end_time,
                         text=seg.text,
-                        speaker=speaker,
+                        speaker=None,
                         confidence=seg.confidence,
                     )
-                    session.final_segments.append(ts.model_dump())
+                    session.all_partial_segments.append(ts)
 
-            # Mark all segments as final and send complete message
-            all_segments = [TranscriptSegment(**s) for s in session.final_segments]
+            # Run diarization once on the full audio buffer
+            logger.info("Running diarization for %s...", session.stream_id)
+            diarization = session.diarizer.diarize()
+            logger.info("Diarization complete: %d turns", len(diarization))
+
+            # Assign speakers to all segments
+            all_segments = []
+            for seg in session.all_partial_segments:
+                speaker = session.diarizer.assign_speaker(
+                    seg.start_time, seg.end_time, diarization
+                )
+                all_segments.append(TranscriptSegment(
+                    status=SegmentStatus.final,
+                    segment_id=seg.segment_id,
+                    start_time=seg.start_time,
+                    end_time=seg.end_time,
+                    text=seg.text,
+                    speaker=speaker,
+                    confidence=seg.confidence,
+                ))
+
             complete = TranscriptCompleteMessage(
                 stream_id=session.stream_id,
                 segments=all_segments,

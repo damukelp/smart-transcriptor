@@ -53,11 +53,6 @@ class SlidingWindowDiarizer:
 
     def add_audio(self, audio: np.ndarray) -> None:
         self._buffer = np.concatenate([self._buffer, audio])
-        max_samples = int(self.window_seconds * self.sample_rate)
-        if len(self._buffer) > max_samples:
-            trim = len(self._buffer) - max_samples
-            self._offset += trim / self.sample_rate
-            self._buffer = self._buffer[trim:]
 
     def diarize(self) -> dict[tuple[float, float], str]:
         """Run diarization on the current window. Returns {(start, end): speaker_label}."""
