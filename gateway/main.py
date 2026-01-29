@@ -69,6 +69,7 @@ async def audio_endpoint(ws: WebSocket):
         relay_task = asyncio.create_task(_relay_asr_to_client(asr_ws, ws, stream_id))
 
         # Main loop: receive audio/end from client
+        relay_done = False
         try:
             while True:
                 message = await ws.receive()
@@ -78,27 +79,30 @@ async def audio_endpoint(ws: WebSocket):
                 if "text" in message:
                     data = json.loads(message["text"])
                     if data.get("type") == ClientMessageType.end:
+                        logger.info("End received, forwarding to ASR: %s", stream_id)
                         await asr_ws.send(message["text"])
-                        # Wait for ASR to finish processing and relay task to complete
-                        try:
-                            await relay_task
-                        except asyncio.CancelledError:
-                            pass
+                        # Wait for ASR to finish processing and relay all responses
+                        logger.info("Waiting for ASR relay to complete: %s", stream_id)
+                        await relay_task
+                        relay_done = True
+                        logger.info("Relay complete: %s", stream_id)
                         break
                 elif "bytes" in message:
-                    audio = normalize_audio(
-                        message["bytes"],
-                        input_sample_rate=session.sample_rate,
-                        input_channels=session.channels,
-                        input_encoding=session.encoding,
+                    await asr_ws.send(
+                        normalize_audio(
+                            message["bytes"],
+                            input_sample_rate=session.sample_rate,
+                            input_channels=session.channels,
+                            input_encoding=session.encoding,
+                        )
                     )
-                    await asr_ws.send(audio)
         finally:
-            relay_task.cancel()
-            try:
-                await relay_task
-            except asyncio.CancelledError:
-                pass
+            if not relay_done:
+                relay_task.cancel()
+                try:
+                    await relay_task
+                except asyncio.CancelledError:
+                    pass
             await asr_ws.close()
 
     except WebSocketDisconnect:
