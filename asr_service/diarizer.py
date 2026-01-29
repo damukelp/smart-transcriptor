@@ -73,10 +73,17 @@ class SlidingWindowDiarizer:
             output = pipeline(audio_input)
 
             result: dict[tuple[float, float], str] = {}
-            for turn, _, speaker in output.itertracks(yield_label=True):
-                abs_start = round(self._offset + turn.start, 3)
-                abs_end = round(self._offset + turn.end, 3)
-                result[(abs_start, abs_end)] = speaker
+            # Support both old (Annotation.itertracks) and new (DiarizeOutput) API
+            if hasattr(output, "itertracks"):
+                for turn, _, speaker in output.itertracks(yield_label=True):
+                    abs_start = round(self._offset + turn.start, 3)
+                    abs_end = round(self._offset + turn.end, 3)
+                    result[(abs_start, abs_end)] = speaker
+            elif hasattr(output, "speaker_diarization"):
+                for turn, speaker in output.speaker_diarization:
+                    abs_start = round(self._offset + turn.start, 3)
+                    abs_end = round(self._offset + turn.end, 3)
+                    result[(abs_start, abs_end)] = speaker
             return result
         except Exception:
             logger.exception("Diarization failed")
