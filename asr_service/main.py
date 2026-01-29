@@ -127,10 +127,13 @@ async def stream_endpoint(ws: WebSocket):
         logger.info("ASR client disconnected: %s", session.stream_id if session else "unknown")
     except Exception:
         logger.exception("ASR stream error")
-        if session:
-            await ws.send_text(
-                ErrorMessage(stream_id=session.stream_id, detail="Internal ASR error").model_dump_json()
-            )
+        try:
+            if session:
+                await ws.send_text(
+                    ErrorMessage(stream_id=session.stream_id, detail="Internal ASR error").model_dump_json()
+                )
+        except Exception:
+            pass
     finally:
         logger.info("ASR session ended: %s", session.stream_id if session else "unknown")
 

@@ -74,6 +74,11 @@ async def audio_endpoint(ws: WebSocket):
                     data = json.loads(message["text"])
                     if data.get("type") == ClientMessageType.end:
                         await asr_ws.send(message["text"])
+                        # Wait for ASR to finish processing and relay task to complete
+                        try:
+                            await relay_task
+                        except asyncio.CancelledError:
+                            pass
                         break
                 elif "bytes" in message:
                     audio = normalize_audio(

@@ -20,10 +20,13 @@ def get_pipeline(hf_token: str = ""):
         try:
             from pyannote.audio import Pipeline
 
+            import os
+            if hf_token:
+                os.environ["HF_TOKEN"] = hf_token
+
             logger.info("Loading pyannote diarization pipeline")
             _pipeline = Pipeline.from_pretrained(
                 "pyannote/speaker-diarization-3.1",
-                token=hf_token or None,
             )
             logger.info("Diarization pipeline loaded")
         except Exception:
