@@ -54,7 +54,12 @@ async def audio_endpoint(ws: WebSocket):
         )
 
         # Open upstream connection to ASR service
-        asr_ws = await websockets.connect(settings.asr_ws_url)
+        asr_ws = await websockets.connect(
+            settings.asr_ws_url,
+            ping_interval=30,
+            ping_timeout=300,
+            close_timeout=300,
+        )
         session.asr_ws = asr_ws
 
         # Forward start message to ASR

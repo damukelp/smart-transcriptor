@@ -8,7 +8,7 @@ import websockets
 
 async def test(wav_path=None):
     uri = "ws://localhost:8080/audio"
-    async with websockets.connect(uri, close_timeout=2) as ws:
+    async with websockets.connect(uri, ping_interval=30, ping_timeout=300, close_timeout=300) as ws:
         await ws.send(json.dumps({
             "type": "start",
             "stream_id": "live-test",
