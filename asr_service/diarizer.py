@@ -8,11 +8,14 @@ import numpy as np
 logger = logging.getLogger(__name__)
 
 _pipeline = None
+_pipeline_failed = False
 
 
 def get_pipeline(hf_token: str = ""):
     """Lazily load pyannote speaker-diarization pipeline."""
-    global _pipeline
+    global _pipeline, _pipeline_failed
+    if _pipeline_failed:
+        return None
     if _pipeline is None:
         try:
             from pyannote.audio import Pipeline
@@ -20,11 +23,12 @@ def get_pipeline(hf_token: str = ""):
             logger.info("Loading pyannote diarization pipeline")
             _pipeline = Pipeline.from_pretrained(
                 "pyannote/speaker-diarization-3.1",
-                use_auth_token=hf_token or None,
+                token=hf_token or None,
             )
             logger.info("Diarization pipeline loaded")
         except Exception:
             logger.warning("pyannote not available; diarization disabled", exc_info=True)
+            _pipeline_failed = True
     return _pipeline
 
 
