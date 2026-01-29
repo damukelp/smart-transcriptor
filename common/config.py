@@ -13,11 +13,11 @@ class GatewaySettings(BaseSettings):
 class ASRSettings(BaseSettings):
     host: str = "0.0.0.0"
     port: int = 8001
-    model_size: str = "base"
+    model_size: str = "large-v3"
     device: str = "auto"
     compute_type: str = "auto"
     hf_token: str = ""
-    chunk_duration_s: float = 1.0
+    chunk_duration_s: float = 3.0
     diarize_window_s: float = 15.0
 
     model_config = {"env_prefix": "ASR_"}
