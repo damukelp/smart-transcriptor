@@ -8,7 +8,7 @@ import websockets
 
 async def test(wav_path=None):
     uri = "ws://localhost:8080/audio"
-    async with websockets.connect(uri) as ws:
+    async with websockets.connect(uri, close_timeout=2) as ws:
         await ws.send(json.dumps({
             "type": "start",
             "stream_id": "live-test",
@@ -47,4 +47,7 @@ async def test(wav_path=None):
 
 if __name__ == "__main__":
     path = sys.argv[1] if len(sys.argv) > 1 else None
-    asyncio.run(test(path))
+    try:
+        asyncio.run(test(path))
+    except websockets.exceptions.ConnectionClosedError:
+        pass
