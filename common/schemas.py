@@ -21,6 +21,7 @@ class StartMessage(BaseModel):
     encoding: str = "pcm_s16le"
     channels: int = 1
     language: Optional[str] = None
+    diarize: bool = True
 
 
 class AudioMessage(BaseModel):

@@ -50,12 +50,13 @@ async def stream_endpoint(ws: WebSocket):
             return
 
         start = StartMessage(**msg)
+        diarize_enabled = start.diarize
         session = StreamSession(
             stream_id=start.stream_id,
             settings=settings,
             language=start.language,
         )
-        logger.info("ASR session started: %s", start.stream_id)
+        logger.info("ASR session started: %s (diarize=%s)", start.stream_id, diarize_enabled)
 
         while True:
             message = await ws.receive()
@@ -111,26 +112,42 @@ async def stream_endpoint(ws: WebSocket):
                     )
                     session.all_partial_segments.append(ts)
 
-            # Run diarization once on the full audio buffer
-            logger.info("Running diarization for %s...", session.stream_id)
-            diarization = session.diarizer.diarize()
-            logger.info("Diarization complete: %d turns", len(diarization))
+            if diarize_enabled:
+                # Run diarization once on the full audio buffer
+                logger.info("Running diarization for %s...", session.stream_id)
+                diarization = session.diarizer.diarize()
+                logger.info("Diarization complete: %d turns", len(diarization))
 
-            # Assign speakers to all segments
-            all_segments = []
-            for seg in session.all_partial_segments:
-                speaker = session.diarizer.assign_speaker(
-                    seg.start_time, seg.end_time, diarization
-                )
-                all_segments.append(TranscriptSegment(
-                    status=SegmentStatus.final,
-                    segment_id=seg.segment_id,
-                    start_time=seg.start_time,
-                    end_time=seg.end_time,
-                    text=seg.text,
-                    speaker=speaker,
-                    confidence=seg.confidence,
-                ))
+                # Assign speakers to all segments
+                all_segments = []
+                for seg in session.all_partial_segments:
+                    speaker = session.diarizer.assign_speaker(
+                        seg.start_time, seg.end_time, diarization
+                    )
+                    all_segments.append(TranscriptSegment(
+                        status=SegmentStatus.final,
+                        segment_id=seg.segment_id,
+                        start_time=seg.start_time,
+                        end_time=seg.end_time,
+                        text=seg.text,
+                        speaker=speaker,
+                        confidence=seg.confidence,
+                    ))
+            else:
+                # Skip diarization — return segments without speaker labels
+                logger.info("Skipping diarization for %s (diarize=False)", session.stream_id)
+                all_segments = [
+                    TranscriptSegment(
+                        status=SegmentStatus.final,
+                        segment_id=seg.segment_id,
+                        start_time=seg.start_time,
+                        end_time=seg.end_time,
+                        text=seg.text,
+                        speaker=None,
+                        confidence=seg.confidence,
+                    )
+                    for seg in session.all_partial_segments
+                ]
 
             complete = TranscriptCompleteMessage(
                 stream_id=session.stream_id,
