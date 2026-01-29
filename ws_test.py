@@ -34,5 +34,7 @@ async def test():
             if resp.get("type") == "transcript_complete":
                 break
 
+    print("\nDone.")
+
 
 asyncio.run(test())
