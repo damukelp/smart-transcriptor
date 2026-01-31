@@ -9,7 +9,14 @@ from asr_service.diarizer import SlidingWindowDiarizer
 class StreamSession:
     """Per-stream state: accumulates audio and tracks segments."""
 
-    def __init__(self, stream_id: str, settings: ASRSettings, language: str | None = None):
+    def __init__(
+        self,
+        stream_id: str,
+        settings: ASRSettings,
+        language: str | None = None,
+        min_speakers: int | None = None,
+        max_speakers: int | None = None,
+    ):
         self.stream_id = stream_id
         self.settings = settings
         self.language = language
@@ -24,6 +31,9 @@ class StreamSession:
             window_seconds=settings.diarize_window_s,
             sample_rate=self.sample_rate,
             hf_token=settings.hf_token,
+            clustering_threshold=settings.diarize_clustering_threshold,
+            min_speakers=min_speakers,
+            max_speakers=max_speakers,
         )
 
         self.final_segments: list[dict] = []

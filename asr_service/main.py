@@ -55,6 +55,8 @@ async def stream_endpoint(ws: WebSocket):
             stream_id=start.stream_id,
             settings=settings,
             language=start.language,
+            min_speakers=start.min_speakers,
+            max_speakers=start.max_speakers,
         )
         logger.info("ASR session started: %s (diarize=%s)", start.stream_id, diarize_enabled)
 

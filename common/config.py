@@ -19,6 +19,7 @@ class ASRSettings(BaseSettings):
     hf_token: str = ""
     chunk_duration_s: float = 3.0
     diarize_window_s: float = 15.0
+    diarize_clustering_threshold: float = 0.55
 
     model_config = {"env_prefix": "ASR_"}
 

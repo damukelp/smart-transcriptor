@@ -22,6 +22,8 @@ class StartMessage(BaseModel):
     channels: int = 1
     language: Optional[str] = None
     diarize: bool = True
+    min_speakers: Optional[int] = None
+    max_speakers: Optional[int] = None
 
 
 class AudioMessage(BaseModel):
