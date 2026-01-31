@@ -28,3 +28,6 @@ GATEWAY_ASR_WS_URL=ws://localhost:8083/stream \
 echo "[startup] Gateway started (pid $!)"
 
 echo "[startup] All services launched"
+
+# Keep container alive
+sleep infinity
