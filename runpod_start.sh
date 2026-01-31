@@ -4,8 +4,12 @@
 
 echo "[startup] Starting services at $(date)"
 
-# Use persistent Ollama binary from /workspace
-export PATH="/workspace/ollama/bin:$PATH"
+# Install Ollama (goes to /usr/local which doesn't persist, so reinstall each boot)
+echo "[startup] Installing Ollama..."
+curl -fsSL https://ollama.com/install.sh | sh
+echo "[startup] Ollama installed"
+
+# Start Ollama with GPU support, models stored persistently
 export OLLAMA_HOST=0.0.0.0
 export OLLAMA_MODELS=/workspace/ollama/models
 ollama serve > /tmp/ollama.log 2>&1 &
