@@ -7,6 +7,7 @@ echo "[startup] Starting services at $(date)"
 # Use persistent Ollama binary from /workspace
 export PATH="/workspace/ollama/bin:$PATH"
 export OLLAMA_HOST=0.0.0.0
+export OLLAMA_MODELS=/workspace/ollama/models
 ollama serve > /tmp/ollama.log 2>&1 &
 echo "[startup] Ollama started (pid $!)"
 
