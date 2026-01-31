@@ -14,9 +14,15 @@ echo "============================================"
 echo "  Smart Transcriptor - RunPod Setup"
 echo "============================================"
 
-# 1. Clone the repo
+# 1. Install system dependencies
 echo ""
-echo "[1/5] Cloning smart-transcriptor..."
+echo "[0/5] Installing system dependencies..."
+apt-get update -qq && apt-get install -y -qq zstd lshw > /dev/null 2>&1
+echo "  zstd and lshw installed"
+
+# 2. Clone the repo
+echo ""
+echo "[1/6] Cloning smart-transcriptor..."
 if [ -d /workspace/smart-transcriptor ]; then
   echo "  Already exists, pulling latest..."
   cd /workspace/smart-transcriptor && git pull
@@ -27,7 +33,7 @@ fi
 
 # 2. Create Python venv and install dependencies
 echo ""
-echo "[2/5] Setting up Python virtual environment..."
+echo "[2/6] Setting up Python virtual environment..."
 if [ ! -d /workspace/venv ]; then
   python -m venv /workspace/venv
 fi
@@ -38,12 +44,12 @@ echo "  Python venv ready at /workspace/venv"
 
 # 3. Install Ollama
 echo ""
-echo "[3/5] Installing Ollama..."
+echo "[3/6] Installing Ollama..."
 curl -fsSL https://ollama.com/install.sh | sh
 
 # 4. Set up persistent Ollama models directory and pull model
 echo ""
-echo "[4/5] Pulling Ollama model..."
+echo "[4/6] Pulling Ollama model..."
 mkdir -p /workspace/ollama/models
 export OLLAMA_HOST=0.0.0.0
 export OLLAMA_MODELS=/workspace/ollama/models
@@ -55,7 +61,7 @@ kill $OLLAMA_PID 2>/dev/null
 
 # 5. Install the startup script
 echo ""
-echo "[5/5] Installing startup script..."
+echo "[5/6] Installing startup script..."
 cp /workspace/smart-transcriptor/runpod_start.sh /workspace/start.sh
 chmod +x /workspace/start.sh
 

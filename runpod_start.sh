@@ -4,6 +4,9 @@
 
 echo "[startup] Starting services at $(date)"
 
+# Install system dependencies (don't persist across restarts)
+apt-get update -qq && apt-get install -y -qq zstd lshw > /dev/null 2>&1
+
 # Install Ollama (goes to /usr/local which doesn't persist, so reinstall each boot)
 echo "[startup] Installing Ollama..."
 curl -fsSL https://ollama.com/install.sh | sh
