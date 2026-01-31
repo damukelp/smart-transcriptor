@@ -4,12 +4,16 @@
 
 echo "[startup] Starting services at $(date)"
 
-# Start Ollama
+# Use persistent Ollama binary from /workspace
+export PATH="/workspace/ollama/bin:$PATH"
 export OLLAMA_HOST=0.0.0.0
 ollama serve > /tmp/ollama.log 2>&1 &
 echo "[startup] Ollama started (pid $!)"
 
-# Wait for Ollama to be ready before starting dependent services
+# Activate persistent Python venv
+source /workspace/venv/bin/activate
+
+# Wait for Ollama to be ready
 sleep 5
 
 # Start smart-transcriptor services
